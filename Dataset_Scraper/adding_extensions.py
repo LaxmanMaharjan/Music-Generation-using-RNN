@@ -1,3 +1,7 @@
+""" This module is for adding extension to all midi files in dataset since when i scraped the dataset it was scraped without extensions.
+
+Running this module in the directory containing the dataset will add extensions to all the midi files.
+"""
 import os
 root = os.getcwd()
 for file in os.listdir('.'):
