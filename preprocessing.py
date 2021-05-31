@@ -1,17 +1,21 @@
 import os
 import music21 as m21
 import json
+import torch
+import numpy as np
+import torch.nn.functional as F
+
 path = '/home/LaxmanMaharjan/Project/Music Generation using C-RNN GAN/Music Generation/Dataset'
 
 ACCEPTABLE_DURATIONS = [
-    0.25,
-    0.5,
-    0.75,
-    1.0,
-    1.5,
-    2,
-    3,
-    4
+    0.25, # 16th note
+    0.5, # 8th note
+    0.75, # Dotted 8th note
+    1.0, # Quarter note
+    1.5, # Dotted quarter note
+    2, # Half note
+    3, # Dotted Half note
+    4 # Whole note
 
 ]
 # SEQUENCE LENGTH is the fixed length sequence to pass in LSTM network
@@ -208,13 +212,70 @@ def create_mapping(songs, mapping_path):
     with open(mapping_path,'w') as file:
         json.dump(mappings, file, indent=4)
 
+def convert_songs_to_int(songs):
+    """ Convert single file with all encoded songs file to int
+    
+    Args:
+        songs: single file with all encoded songs
+    Return:
+        int_songs: songs with int values instead of encoded symbols
+    """
+    int_songs = []
+    # load mappings
+    with open(MAPPING_PATH, 'r') as file:
+        mappings = json.load(file)
+
+    # cast songs which is in string to list split combined songs to individual song
+    songs = songs.split()
+
+    # map songs to int from mappings look up table
+    for symbol in songs:
+        int_songs.append(mappings[symbol])
+    
+    return int_songs
+
+def generate_training_sequences(sequence_length):
+    """ Generating sequential dataset to feed in LSTM network
+    
+    Args:
+        sequence_length: length of sequence
+    """
+    # load songs and map them into int
+    songs = load(SINGLE_ENCODED_FILE_PATH)
+    int_songs = convert_songs_to_int(songs)
+
+    # genertae the training sequences
+    # consider if dataset has 100 symbols and 64 sequence length then the number of sequences generated = 100-64
+
+    inputs = []
+    targets = []
+
+    num_sequences = len(int_songs) - sequence_length
+    # generating input sequences for network
+    for i in range(num_sequences):
+        # sliding by one step in dataset to generate sequences
+        inputs.append(int_songs[i:i+sequence_length])
+        # target is next note or rest in the sequence just after sequence length
+        targets.append(int_songs[i+sequence_length]) 
+
+        # One-Hot Encoding the sequences of dataset
+        # inputs: (number of sequences, sequence_length, vocabulary_size)
+    vocabulary_size = len(set(int_songs))
+    # inputs is torch.tensor type whose shape is (number of sequences, sequence_length, vocabulary_size)
+    inputs = F.one_hot(torch.tensor(inputs), num_classes=vocabulary_size)
+            
+    return inputs, targets
+        
+
+
 def main():
-    preprocess('./Test')
+    preprocess('./Child')
     
     songs = create_single_file_dataset(ENCODED_FILE_PATH, SINGLE_ENCODED_FILE_PATH, SEQUENCE_LENGTH)
     
     create_mapping(songs, MAPPING_PATH)
-
+    
+    return (generate_training_sequences(SEQUENCE_LENGTH))
     
 if __name__ == '__main__':
     
