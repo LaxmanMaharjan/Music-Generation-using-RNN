@@ -4,6 +4,7 @@ import json
 import torch
 import numpy as np
 import torch.nn.functional as F
+import pickle
 
 path = '/home/LaxmanMaharjan/Project/Music Generation using C-RNN GAN/Music Generation/Dataset'
 
@@ -279,7 +280,13 @@ def main():
     
 if __name__ == '__main__':
     
-    main()
+    inputs, targets = main()
+    dataset = {}
+    dataset['inputs'] = inputs
+    dataset['targets'] = targets
+    with open('dataset.picke','wb') as file:
+        pickle.dump(dataset, file)
+    
     #songs=load_songs('./Test')
     #print(len(songs))
     #for song in songs:
