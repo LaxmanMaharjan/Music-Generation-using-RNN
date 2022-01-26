@@ -1,1 +1,1 @@
-# Major Project under development.
+# Music Generation using RNN
